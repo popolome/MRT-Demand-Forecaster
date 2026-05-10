@@ -1,0 +1,10 @@
+pandas
+matplotlib
+seaborn
+statsmodels
+prophet
+evidently
+streamlit
+requests
+python-dotenv
+jupyter
