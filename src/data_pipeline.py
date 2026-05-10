@@ -2,6 +2,7 @@ import os
 import requests
 import pandas as pd
 from dotenv import load_dotenv
+from utils import validate_date_format, check_raw_data_exists, log, generate_date_range
 
 load_dotenv()
 API_KEY = os.getenv("LTA_API_KEY")
@@ -48,7 +49,7 @@ def save_raw_data(df: pd.DataFrame, filename: str) -> None:
     os.makedirs("data/raw", exist_ok=True)
     filepath = os.path.join("data", "raw", filename)
     df.to_csv(filepath, index=False)
-    print(f"Saved raw data to {filepath}")
+    log(f"Saved raw data to {filepath}")
 
 def load_raw_data(filenames: list) -> pd.DataFrame:
     """
@@ -72,16 +73,19 @@ def load_raw_data(filenames: list) -> pd.DataFrame:
     return combined_df
 
 if __name__ == "__main__":
-    dates = [
-        "202301", "202302", "202303", "202304", "202305", "202306",
-        "202307", "202308", "202309", "202310", "202311", "202312",
-        "202401", "202402", "202403", "202404", "202405", "202406",
-        "202407", "202408", "202409", "202410", "202411", "202412",
-    ]
+    dates = generate_date_range("202301", "202412")
 
     for date in dates:
-        print(f"Fetching data for {date}...")
+        if check_raw_data_exists(f"{date}.csv"):
+            log(f"Skipping {date} — already exists")
+            continue
+
+        if not validate_date_format(date):
+            log(f"Invalid date format: {date} — skipping")
+            continue
+
+        log(f"Fetching data for {date}...")
         df = fetch_passenger_volume(date)
         save_raw_data(df, f"{date}.csv")
 
-    print("All data fetched and saved!")
+    log("All data fetched and saved!")
