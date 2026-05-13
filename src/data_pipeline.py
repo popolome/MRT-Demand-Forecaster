@@ -1,4 +1,6 @@
 import os
+import io
+import zipfile
 import requests
 import pandas as pd
 from dotenv import load_dotenv
@@ -7,7 +9,7 @@ from utils import validate_date_format, check_raw_data_exists, log, generate_dat
 load_dotenv()
 API_KEY = os.getenv("LTA_API_KEY")
 
-BASE_URL = "http://datamall2.mytransport.sg/ltaodataservice"
+BASE_URL = "https://datamall2.mytransport.sg/ltaodataservice"
 
 HEADERS = {
     "AccountKey": API_KEY,
@@ -24,14 +26,22 @@ def fetch_passenger_volume(date: str) -> pd.DataFrame:
     Returns:
         DataFrame containing passenger volume data
     """
-    url = f"{BASE_URL}/PV/Train"
+    url = f"{BASE_URL}/PV/Bus"
     params = {"Date": date}
 
     response = requests.get(url, headers=HEADERS, params=params)
     response.raise_for_status()
 
     data = response.json()
-    df = pd.DataFrame(data["value"])
+    download_link = data["value"][0]["Link"]
+
+    zip_response = requests.get(download_link)
+    zip_response.raise_for_status()
+
+    with zipfile.ZipFile(io.BytesIO(zip_response.content)) as z:
+        csv_filename = z.namelist()[0]
+        with z.open(csv_filename) as f:
+            df = pd.read_csv(f)
 
     return df
 
