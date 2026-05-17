@@ -205,7 +205,7 @@ This is a portfolio project, but suggestions are welcome! Open an issue or submi
 ---
 
 ## 📄 License
-MIT License — see LICENSE for details.
+MIT License — see [LICENSE](LICENSE) for details.
 
 ---
 
