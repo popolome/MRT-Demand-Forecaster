@@ -25,23 +25,27 @@ This project builds and evaluates multiple time‑series forecasting models to p
 ---
 
 ## 📂 Repository Structure
+
+```text
 MRT-Demand-Forecaster/
 ├── data/
-│ ├── raw/ # Original downloaded data
-│ └── processed/
-│ └── mrt_ridership_processed.csv # Cleaned monthly ridership
-├── notebooks/
-│ ├── 01_eda_and_preprocessing.ipynb # Data cleaning & exploration
-│ ├── 02_arima_sarima.ipynb # ARIMA & SARIMA modelling
-│ └── 03_prophet.ipynb # Prophet with Singapore holidays
+│   ├── raw/                        # Original source data downloads
+│   └── processed/
+│       └── mrt_ridership_processed.csv # Cleaned monthly ridership data
 ├── models/
-│ ├── sarima_010_110_12.pkl # Final production model
-│ └── model_metadata.json # Model performance & parameters
+│   ├── sarima_010_110_12.pkl       # Final stabilized production model
+│   └── model_metadata.json         # Performance metrics & hyperparameters
+├── notebooks/
+│   ├── 01_eda_and_preprocessing.ipynb
+│   ├── 02_arima_sarima.ipynb
+│   └── 03_prophet.ipynb
 ├── src/
-│ └── data_preprocessing.py # Helper functions
-├── requirements.txt
+│   └── data_preprocessing.py       # Modular data pipeline utilities
+├── .gitignore
+├── LICENSE
 ├── README.md
-└── .gitignore
+└── requirements.txt
+```
 
 ---
 
