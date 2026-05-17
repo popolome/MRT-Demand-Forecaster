@@ -33,7 +33,6 @@ MRT-Demand-Forecaster/
 │   └── processed/
 │       └── mrt_ridership_processed.csv # Cleaned monthly ridership data
 ├── models/
-│   ├── sarima_010_110_12.pkl       # Final stabilized production model
 │   └── model_metadata.json         # Performance metrics & hyperparameters
 ├── notebooks/
 │   ├── 01_eda_and_preprocessing.ipynb
@@ -171,7 +170,10 @@ jupyter>=1.0.0
 ```bash
 jupyter notebook
 ```
-Open the notebooks in order: 01 → 02 → 03.
+Open the notebooks in order:
+1. [01_eda_and_preprocessing.ipynb](notebooks/01_eda_and_preprocessing.ipynb)
+2. [02_arima_sarima.ipynb](notebooks/02_arima_sarima.ipynb)
+3. [03_prophet.ipynb](notebooks/03_prophet.ipynb)
 
 ---
 

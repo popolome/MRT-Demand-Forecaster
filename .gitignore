@@ -3,5 +3,7 @@ venv/
 __pycache__/
 *.pyc
 data/raw/
-models/
+models/*.pkl
+models/*.csv
+models/prophet_metadata.json
 .ipynb_checkpoints/
