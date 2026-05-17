@@ -123,31 +123,23 @@ forecast_original = forecast_scaled * 1_000_000  # convert back to riders
 
 ## Important Usage Notes
 - Point forecasts are reliable (validated 4.67% MAPE).
-
 - Prediction intervals are approximate — apply ±10% buffer due to non‑normal residuals from COVID outliers.
-
 - Retrain when MAPE exceeds 5% on new data.
-
 - Monitor monthly and consider an ensemble with a seasonal naive model for robustness.
 
 ---
 
 ## ⚙️ Technologies Used
 - Python 3.8+
-
 - pandas, numpy — data manipulation
-
 - statsmodels — ARIMA/SARIMA modelling
-
 - Prophet — Facebook's time‑series library
-
 - matplotlib, seaborn — visualisation
-
 - scikit‑learn, scipy — metrics & diagnostics
-
 - joblib — model serialisation
-
 - jupyter — interactive development
+
+---
 
 ## 🏁 Quick Start
 1. Clone the repository
@@ -160,6 +152,8 @@ cd MRT-Demand-Forecaster
 ```bash
 pip install -r requirements.txt
 ```
+
+```text
 requirements.txt content:
 pandas>=1.5.0
 numpy>=1.24.0
@@ -171,6 +165,7 @@ scikit-learn>=1.2.0
 scipy>=1.10.0
 joblib>=1.2.0
 jupyter>=1.0.0
+```
 
 3. Launch Jupyter
 ```bash
@@ -181,10 +176,12 @@ Open the notebooks in order: 01 → 02 → 03.
 ---
 
 ## 🔄 Retraining Schedule
-Frequency	Trigger	Action
-Monthly	New ridership data available	Re‑evaluate MAPE
-Quarterly	MAPE > 5%	Retrain model
-Annually	Structural change suspected	Full grid search
+
+| Frequency | Trigger | Action |
+| :--- | :--- | :--- |
+| **Monthly** | New ridership data available | Re‑evaluate MAPE |
+| **Quarterly** | MAPE > 5% | Retrain model |
+| **Annually** | Structural change suspected | Full grid search |
 
 ---
 
@@ -196,11 +193,8 @@ Annually	Structural change suspected	Full grid search
 
 ### Future Improvements
 - Prophet with manual changepoints — place changepoints exactly at COVID crash/recovery boundaries.
-
 - Machine Learning (XGBoost) — feature engineering with lags, rolling stats, and date features.
-
 - Hierarchical forecasting — separate models per line or station.
-
 - Ensemble — weighted combination of SARIMA + Prophet + seasonal naive.
 
 ---
