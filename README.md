@@ -215,4 +215,22 @@ MIT License — see LICENSE for details.
 
 ---
 
+## 👤 Author
+
+**Jun Kit Mak**
+
+- GitHub: [@popolome](https://github.com/popolome)
+- LinkedIn: [Mak Jun Kit](https://www.linkedin.com/in/jun-kit-mak-611b4b108/)
+- Portfolio: [github.com/popolome](https://github.com/popolome)
+
+*BSc Data Science & Analytics (Distinction), University of Portsmouth, 2026*
+
+---
+
 Built as a demonstration of rigorous time‑series modelling, diagnostic checking, and honest model selection for real‑world forecasting challenges.
+
+---
+
+**⭐ If you found this useful, consider starring the repo!**
+
+[![Star on GitHub](https://shields.io/github/stars/popolome/MRT-Demand-Forecaster?style=social)](https://github.com/MRT-Demand-Forecaster)
