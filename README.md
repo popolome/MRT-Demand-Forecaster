@@ -75,7 +75,7 @@ MRT-Demand-Forecaster/
 
 ## 📊 Model Performance
 
-![Prophet vs SARIMA Forecast Comparison](reports/comparison_chart.png)
+![Prophet vs SARIMA Forecast Comparison](reports/comparison_chart.PNG)
 
 | Model | MAPE | MAE (riders) | Status |
 |---|---|---|---|
