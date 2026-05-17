@@ -4,7 +4,7 @@
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Last Commit](https://img.shields.io/github/last-commit/popolome/MRT-Demand-Forecaster)](https://github.com/popolome/MRT-Demand-Forecaster)
 
-**Singapore MRT ridership time-series forecasting using ARIMA, SARIMA, and Prophet.**
+**Time-series forecasting of Singapore MRT ridership — SARIMA achieves 4.67% MAPE on 2024 data, outperforming Prophet and ARIMA across 72 months including COVID-19 disruption.**
 
 ---
 
