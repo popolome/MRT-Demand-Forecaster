@@ -77,7 +77,7 @@ MRT-Demand-Forecaster/
 ## 📊 Model Performance
 
 ![Prophet vs SARIMA Forecast Comparison](reports/comparison_chart.PNG)
-![SARIMA 2.54% Rejected](reports/sarima_rejected.PNG)
+![SARIMA 2.54% Rejected](reports/sarima_rejected.png)
 
 | Model | MAPE | MAE (riders) | Status |
 |---|---|---|---|
