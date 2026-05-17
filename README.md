@@ -36,6 +36,7 @@ MRT-Demand-Forecaster/
 │   └── 03_prophet.ipynb
 ├── reports/
 │   ├── comparison_chart.png
+│   ├── sarima_rejected.png
 ├── src/
 │   ├── data_pipeline.py      # Fetches monthly data from LTA DataMall API
 │   ├── load_data.py          # Loads raw ridership CSV into DataFrame
@@ -76,6 +77,7 @@ MRT-Demand-Forecaster/
 ## 📊 Model Performance
 
 ![Prophet vs SARIMA Forecast Comparison](reports/comparison_chart.PNG)
+![SARIMA 2.54% Rejected](reports/sarima_rejected.PNG)
 
 | Model | MAPE | MAE (riders) | Status |
 |---|---|---|---|
