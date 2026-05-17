@@ -1,253 +1,214 @@
-# 🚇 Singapore MRT Demand Forecaster
+# 🚇 MRT Demand Forecaster
 
-Time series forecasting of monthly MRT ridership using SARIMA modeling, achieving **4.67% MAPE** on 2024 test data.
+[![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Last Commit](https://img.shields.io/github/last-commit/popolome/MRT-Demand-Forecaster)](https://github.com/popolome/MRT-Demand-Forecaster)
 
-## 🎯 Project Overview
-
-This project forecasts Singapore's Mass Rapid Transit (MRT) system ridership using statistical time series models. The analysis spans 72 months (2019-2024), including the COVID-19 disruption period, and identifies the optimal model for 3-6 month ahead forecasting.
-
-### Business Value
-- **52% improvement** over ARIMA baseline (9.74% → 4.67% MAPE)
-- Robust predictions despite COVID-19 disruption in training data
-- Production-ready model for capacity planning and resource allocation
+**Singapore MRT ridership time-series forecasting using ARIMA, SARIMA, and Prophet.**
 
 ---
 
-## 📊 Model Performance Comparison
+## 📌 Overview
+
+This project builds and evaluates multiple time‑series forecasting models to predict **monthly MRT ridership in Singapore** (2019–2024). The data includes the massive structural break caused by COVID‑19, making it a challenging real‑world forecasting problem.
+
+**Key result:** A stable **SARIMA(0,1,0)×(1,1,0,12)** model achieves **4.67% MAPE** on a 12‑month test set — a 52% improvement over the ARIMA baseline.
+
+---
+
+## 🎯 Business Problem
+
+- **Goal:** Predict monthly ridership to support capacity planning, staffing, and maintenance scheduling.
+- **Challenge:** The COVID‑19 pandemic caused an unprecedented 80%+ drop in ridership, violating classical time‑series assumptions.
+- **Constraint:** Only 72 months of data (2019–2024), making complex models prone to overfitting.
+
+---
+
+## 📂 Repository Structure
+MRT-Demand-Forecaster/
+├── data/
+│ ├── raw/ # Original downloaded data
+│ └── processed/
+│ └── mrt_ridership_processed.csv # Cleaned monthly ridership
+├── notebooks/
+│ ├── 01_eda_and_preprocessing.ipynb # Data cleaning & exploration
+│ ├── 02_arima_sarima.ipynb # ARIMA & SARIMA modelling
+│ └── 03_prophet.ipynb # Prophet with Singapore holidays
+├── models/
+│ ├── sarima_010_110_12.pkl # Final production model
+│ └── model_metadata.json # Model performance & parameters
+├── src/
+│ └── data_preprocessing.py # Helper functions
+├── requirements.txt
+├── README.md
+└── .gitignore
+
+---
+
+## 🔍 Key Technical Findings
+
+### 1. Model Selection Required Diagnostic Rigour
+- The grid‑search winner, `SARIMA(0,1,0)×(1,1,1,12)`, had **2.54% MAPE** but was **rejected** due to:
+  - Singular covariance matrix (condition number `1.71e+38`) → numerical instability
+  - MA coefficient on the invertibility boundary (`-1.0000`)
+  - Highly non‑normal, heteroskedastic residuals (p < 0.05)
+- **Lesson:** Never select a model on MAPE alone.
+
+### 2. Numerical Stability Matters
+- The original‑scale `SARIMA(0,1,0)×(1,1,0,12)` produced a singular covariance matrix.
+- Scaling ridership to millions fixed the instability — the model became well‑conditioned and trustworthy.
+
+### 3. COVID Dummy Variables Failed (for a good reason)
+- Attempted both permanent (March 2020–December 2021) and sharp (crash‑only) dummies.
+- Seasonal differencing (D=1) transformed the dummy into a 12‑month echo, making it collinear with the seasonal AR term → coefficient stuck at 0, p‑value = 1.000.
+- **Lesson:** Understand your model's internal transformations before adding exogenous variables.
+
+### 4. Prophet Struggled with Limited Data
+- With only 60 training points, Prophet's flexible trend extrapolated the post‑COVID recovery into unrealistic 2024 patterns.
+- Additive seasonality performed even worse (12.61% MAPE) because the series needed **multiplicative** seasonality to handle the massive level shift.
+- Residual analysis revealed systematic bias (mean residual = +76,829) and high variance (std dev = 363k vs SARIMA's 184k).
+
+---
+
+## 📊 Model Performance
 
 | Model | MAPE | MAE (riders) | Status |
-|-------|------|--------------|--------|
+|---|---|---|---|
 | **SARIMA(0,1,0)×(1,1,0,12)** | **4.67%** | **157,776** | ✅ **Production Model** |
 | ARIMA(2,1,2) | 9.74% | 335,614 | Baseline |
 | Prophet (Multiplicative) | 8.76% | 297,615 | ❌ Underperformed |
 | Prophet (Additive) | 12.61% | — | ❌ Worst performer |
 
-*SARIMA(0,1,0)×(1,1,1,12) achieved 2.54% MAPE but was rejected due to diagnostic failures (singular covariance matrix)*
+> **Note:** The SARIMA(0,1,0)×(1,1,1,12) model (2.54% MAPE) was **rejected** after failing diagnostic tests — a numerically unstable model with boundary parameters and severe residual violations.
+
+**SARIMA reduces error by 52% vs ARIMA and 47% vs the best Prophet configuration.**
 
 ---
 
-## 🔬 Key Technical Findings
+## 🛠️ Methodology
 
-### 1. **Diagnostic Rigor Matters**
-- Initially found SARIMA(0,1,0)×(1,1,1,12) with 2.54% MAPE
-- **Rejected** due to failed diagnostics:
-  - Singular covariance matrix (condition number = inf)
-  - Non-normal residuals (Jarque-Bera p < 0.01)
-  - Heteroskedasticity (p < 0.01)
-- Chose simpler SARIMA(0,1,0)×(1,1,0,12) with honest 4.67% MAPE
+### ARIMA/SARIMA (`02_arima_sarima.ipynb`)
+- **Stationarity:** ADF test (p=0.19) → first differencing (d=1) achieved stationarity (p=0.00).
+- **Grid Search:** Tested **72 SARIMA configurations** (p/q = 0‑2, P/D/Q = 0‑1, m=12).
+- **Model Selection:** Filtered by:
+  1. Numerical stability (no singular matrix)
+  2. Residual autocorrelation (Ljung‑Box p > 0.05)
+  3. MAPE on test set
+- **Scaling fix:** Raw ridership caused numerical overflow; scaling to millions resolved all singularity warnings.
 
-### 2. **Data Scaling Solved Numerical Instability**
-- Original model on unscaled data: \`sigma2 = 1.219e+11\` (unstable)
-- Scaling ridership to millions: \`sigma2 = 0.1561\` (stable)
-- Prevented artificially low MAPE from broken model
-
-### 3. **Simpler Models Win with Limited Data**
-- 60 months training data (including 2 COVID years)
-- SARIMA's explicit seasonal structure beat Prophet's flexibility
-- Prophet overreacted to COVID changepoints
-
-### 4. **COVID Disruption Handling**
-- ✅ **What worked:** Data scaling to millions
-- ❌ **What didn't:** COVID dummy variables (collinearity issues)
-- ❌ **What didn't:** Prophet's changepoint detection (over-fitted)
+### Prophet (`03_prophet.ipynb`)
+- **Seasonality:** Multiplicative (to handle the 80% level shift) with yearly seasonality.
+- **Holidays:** All 9 Singapore public holidays (60 entries) with windows set to 0 (monthly aggregation already captures spillover).
+- **COVID handling:** Binary regressor for crash period + `changepoint_prior_scale=0.5` for flexible trend.
+- **Tuning attempt:** Additive seasonality + `changepoint_prior_scale=0.05` → MAPE worsened to 12.61%, confirming multiplicative was correct.
 
 ---
 
-## 📁 Repository Structure
+## 🚀 Production Deployment
 
-\`\`\`
-MRT-Demand-Forecaster/
-├── README.md                     # This file
-├── requirements.txt              # Python dependencies
-├── .gitignore                    # Excludes models/, data/raw/
-│
-├── data/
-│   ├── processed/
-│   │   └── ridership_monthly.csv # Cleaned monthly ridership data
-│   └── raw/                      # Original data (gitignored)
-│
-├── notebooks/
-│   ├── 01_eda.ipynb             # Exploratory Data Analysis
-│   ├── 02_arima_sarima.ipynb   # ARIMA/SARIMA modeling (WINNER)
-│   └── 03_prophet.ipynb         # Prophet evaluation
-│
-├── models/                       # Trained models (gitignored)
-│   ├── sarima_010_110_12.pkl
-│   ├── model_metadata.json
-│   ├── prophet_forecast_test.csv
-│   └── prophet_metadata.json
-│
-└── src/                          # Source code (if needed)
-\`\`\`
-
----
-
-## 🚀 Quick Start
-
-### Prerequisites
-\`\`\`bash
-Python 3.8+
-\`\`\`
-
-### Installation
-\`\`\`bash
-# Clone repository
-git clone https://github.com/popolome/MRT-Demand-Forecaster.git
-cd MRT-Demand-Forecaster
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Launch Jupyter
-jupyter notebook
-\`\`\`
-
-### Run Notebooks in Order
-1. **01_eda.ipynb** - Explore ridership patterns, stationarity, seasonality
-2. **02_arima_sarima.ipynb** - Train ARIMA/SARIMA models, select winner
-3. **03_prophet.ipynb** - Evaluate Prophet as alternative
-
----
-
-## 📈 Methodology
-
-### Data Preparation
-- **Source:** Singapore LTA monthly MRT ridership (2019-2024)
-- **Split:** 60 months training (2019-01 to 2023-12) / 12 months test (2024-01 to 2024-12)
-- **Preprocessing:** Scaled to millions to prevent numerical overflow
-
-### Model Selection Process
-1. **Stationarity Testing:** ADF test confirmed d=1 differencing needed
-2. **ACF/PACF Analysis:** Identified seasonal patterns (period=12)
-3. **Grid Search:** Tested 108 SARIMA configurations
-4. **Diagnostic Validation:** 
-   - Ljung-Box test (autocorrelation)
-   - Jarque-Bera test (normality)
-   - Heteroskedasticity test
-   - Covariance matrix singularity check
-5. **Final Selection:** SARIMA(0,1,0)×(1,1,0,12) passed all diagnostics
-
-### Prophet Evaluation
-- Tested multiplicative & additive seasonality modes
-- Added Singapore public holidays (Chinese New Year, etc.)
-- Included COVID regressor for 2020-2021 period
-- **Result:** Underperformed SARIMA by 87% (8.76% vs 4.67% MAPE)
-
----
-
-## 📊 Results
-
-### Final Model: SARIMA(0,1,0)×(1,1,0,12)
-
-**Test Set Performance (2024):**
-- MAPE: 4.67%
-- MAE: 157,776 riders
-- RMSE: 183,628 riders
-
-**Model Specification:**
-- Non-seasonal: (p=0, d=1, q=0)
-- Seasonal: (P=1, D=1, Q=0, s=12)
-- Data scaling: Ridership / 1,000,000
-
-**Diagnostics:**
-- ✅ No autocorrelation (Ljung-Box p=0.11)
-- ✅ Numerically stable (no singularity warnings)
-- ⚠️ Non-normal residuals (COVID outliers - documented)
-- ⚠️ Heteroskedasticity (apply ±10% buffer to intervals)
-
----
-
-## 💡 Key Learnings
-
-1. **Always validate diagnostics** - Don't trust MAPE alone
-2. **Simpler models can outperform complex ones** with limited data
-3. **Data scaling matters** for numerical stability
-4. **Prophet needs 5+ years** of clean data to shine
-5. **COVID disruption** is best handled with data scaling, not explicit dummies
-
----
-
-## 🔮 Production Deployment Guidelines
-
-### Forecasting Horizon
-- Optimal: **3-6 months ahead**
-- Maximum: 12 months (accuracy degrades beyond 6 months)
-
-### Prediction Workflow
-\`\`\`python
+### Loading the Final Model
+```python
 import joblib
-import pandas as pd
-
-# Load model
 model = joblib.load('models/sarima_010_110_12.pkl')
 
-# Generate forecast (remember to scale!)
-forecast_scaled = model.forecast(steps=6)  # 6 months ahead
-forecast = forecast_scaled * 1_000_000     # Unscale to actual ridership
+# Forecast next 6 months
+forecast_scaled = model.forecast(steps=6)
+forecast_original = forecast_scaled * 1_000_000  # convert back to riders
+```
+---
 
-# Apply ±10% buffer for prediction intervals
-upper = forecast * 1.1
-lower = forecast * 0.9
-\`\`\`
+## Important Usage Notes
+- Point forecasts are reliable (validated 4.67% MAPE).
 
-### Retraining Schedule
-- **Frequency:** Quarterly with new data
-- **Validation:** Re-run diagnostics each time
-- **Alert:** If MAPE > 6% for 2+ consecutive quarters, investigate
+- Prediction intervals are approximate — apply ±10% buffer due to non‑normal residuals from COVID outliers.
 
-### When to Reconsider Prophet
-- If you collect 5+ years of post-COVID data (2024-2029+)
-- If ridership patterns become less stable
-- If holiday effects become more pronounced
+- Retrain when MAPE exceeds 5% on new data.
+
+- Monitor monthly and consider an ensemble with a seasonal naive model for robustness.
 
 ---
 
-## 🛠️ Technologies Used
+## ⚙️ Technologies Used
+- Python 3.8+
 
-- **Python 3.10**
-- **statsmodels** - ARIMA/SARIMA modeling
-- **Prophet** - Facebook's time series forecasting
-- **pandas** - Data manipulation
-- **matplotlib/seaborn** - Visualization
-- **scikit-learn** - Metrics calculation
-- **Jupyter** - Interactive analysis
+- pandas, numpy — data manipulation
+
+- statsmodels — ARIMA/SARIMA modelling
+
+- Prophet — Facebook's time‑series library
+
+- matplotlib, seaborn — visualisation
+
+- scikit‑learn, scipy — metrics & diagnostics
+
+- joblib — model serialisation
+
+- jupyter — interactive development
+
+## 🏁 Quick Start
+1. Clone the repository
+```bash
+git clone https://github.com/popolome/MRT-Demand-Forecaster.git
+cd MRT-Demand-Forecaster
+```
+
+2. Install dependencies
+```bash
+pip install -r requirements.txt
+```
+requirements.txt content:
+pandas>=1.5.0
+numpy>=1.24.0
+matplotlib>=3.6.0
+seaborn>=0.12.0
+statsmodels>=0.14.0
+prophet>=1.1.0
+scikit-learn>=1.2.0
+scipy>=1.10.0
+joblib>=1.2.0
+jupyter>=1.0.0
+
+3. Launch Jupyter
+```bash
+jupyter notebook
+```
+Open the notebooks in order: 01 → 02 → 03.
 
 ---
 
-## 📝 Future Work
-
-### Potential Enhancements
-1. **Ensemble Model** - Combine SARIMA + Prophet forecasts
-2. **Machine Learning** - Try XGBoost/Random Forest with engineered features
-3. **External Regressors** - GDP growth, fuel prices, population density
-4. **Hierarchical Forecasting** - Forecast by MRT line, then reconcile to total
-
-### Requirements for ML Approaches
-- 5+ years of post-COVID data
-- Feature engineering (lags, rolling stats, holidays)
-- Cross-validation with time series splits
+## 🔄 Retraining Schedule
+Frequency	Trigger	Action
+Monthly	New ridership data available	Re‑evaluate MAPE
+Quarterly	MAPE > 5%	Retrain model
+Annually	Structural change suspected	Full grid search
 
 ---
 
-## 👤 Author
+## 📝 Limitations & Future Work
+### Known Limitations
+- Prediction intervals are approximate (non‑normal residuals from COVID).
+- Model trained on only 60 months — larger post‑COVID dataset would improve stability.
+- Does not incorporate external drivers (fuel prices, economic indicators, new MRT lines).
 
-**Jun Kit Mak**
-- GitHub: [@popolome](https://github.com/popolome)
+### Future Improvements
+- Prophet with manual changepoints — place changepoints exactly at COVID crash/recovery boundaries.
+
+- Machine Learning (XGBoost) — feature engineering with lags, rolling stats, and date features.
+
+- Hierarchical forecasting — separate models per line or station.
+
+- Ensemble — weighted combination of SARIMA + Prophet + seasonal naive.
+
+---
+
+## 🤝 Contributing
+This is a portfolio project, but suggestions are welcome! Open an issue or submit a pull request.
 
 ---
 
 ## 📄 License
-
-This project is licensed under the MIT License.
-
----
-
-## 🙏 Acknowledgments
-
-- Data source: Land Transport Authority (LTA) Singapore
-- Inspired by best practices in production time series forecasting
-- Special thanks to the statsmodels and Prophet development teams
+MIT License — see LICENSE for details.
 
 ---
 
-**⭐ If you found this helpful, please star the repo!**
+Built as a demonstration of rigorous time‑series modelling, diagnostic checking, and honest model selection for real‑world forecasting challenges.
