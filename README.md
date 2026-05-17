@@ -28,9 +28,7 @@ This project builds and evaluates multiple time‑series forecasting models to p
 
 ```text
 MRT-Demand-Forecaster/
-├── data/
-│   ├── raw/                        # Original source data downloads
-│   └── processed/
+├── data/processed
 │       └── mrt_ridership_processed.csv # Cleaned monthly ridership data
 ├── models/
 │   └── model_metadata.json         # Performance metrics & hyperparameters
@@ -40,6 +38,8 @@ MRT-Demand-Forecaster/
 │   └── 03_prophet.ipynb
 ├── src/
 │   └── data_preprocessing.py       # Modular data pipeline utilities
+|   └── load_data.py
+|   └── utils.py
 ├── .gitignore
 ├── LICENSE
 ├── README.md
