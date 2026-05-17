@@ -30,16 +30,14 @@ This project builds and evaluates multiple time‑series forecasting models to p
 MRT-Demand-Forecaster/
 ├── data/processed
 │       └── mrt_ridership_processed.csv # Cleaned monthly ridership data
-├── models/
-│   └── model_metadata.json         # Performance metrics & hyperparameters
 ├── notebooks/
-│   ├── 01_eda.ipynb.ipynb
+│   ├── 01_eda.ipynb
 │   ├── 02_arima_sarima.ipynb
 │   └── 03_prophet.ipynb
 ├── src/
-│   └── data_preprocessing.py       # Modular data pipeline utilities
-|   └── load_data.py
-|   └── utils.py
+│   ├── data_pipeline.py      # Fetches monthly data from LTA DataMall API
+│   ├── load_data.py          # Loads raw ridership CSV into DataFrame
+│   └── utils.py              # Helpers: date validation, logging, file checks
 ├── .gitignore
 ├── LICENSE
 ├── README.md
@@ -171,7 +169,7 @@ jupyter>=1.0.0
 jupyter notebook
 ```
 Open the notebooks in order:
-1. [01_eda.ipynb.ipynb](notebooks/01_eda.ipynb)
+1. [01_eda.ipynb](notebooks/01_eda.ipynb)
 2. [02_arima_sarima.ipynb](notebooks/02_arima_sarima.ipynb)
 3. [03_prophet.ipynb](notebooks/03_prophet.ipynb)
 
@@ -229,4 +227,4 @@ Built as a demonstration of rigorous time‑series modelling, diagnostic checkin
 
 **⭐ If you found this useful, consider starring the repo!**
 
-[![Star on GitHub](https://shields.io/github/stars/popolome/MRT-Demand-Forecaster?style=social)](https://github.com/MRT-Demand-Forecaster)
+[![Star on GitHub](https://img.shields.io/github/stars/popolome/MRT-Demand-Forecaster?style=social)](https://github.com/popolome/MRT-Demand-Forecaster)
