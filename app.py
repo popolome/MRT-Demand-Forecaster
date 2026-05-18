@@ -300,12 +300,14 @@ with col_a:
 
     def highlight_rows(row):
         if row["Status"] == "✅ Production":
-            return ["background-color: #d1fae5; font-weight: bold; color: black"] * len(row)
+            return ["background-color: #d1fae5; font-weight: bold"] * len(row)
         elif "Rejected" in row["Status"]:
-            return ["background-color: #fef3c7; color: black"] * len(row)
+            return ["background-color: #fef3c7"] * len(row)
         elif "❌" in row["Status"]:
-            return ["background-color: #fee2e2; color: black"] * len(row)
-        return ["color: black"] * len(row)
+            return ["background-color: #fee2e2"] * len(row)
+        elif row["Status"] == "Baseline":
+            return ["background-color: #e9e9e9"] * len(row)
+        return [""] * len(row)
 
     st.dataframe(
         model_data.style.apply(highlight_rows, axis=1),
