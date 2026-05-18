@@ -299,15 +299,23 @@ with col_a:
     })
 
     def highlight_rows(row):
+        # Force black text for all rows
+        black_text = "color: black;"
+        
         if row["Status"] == "✅ Production":
-            return ["background-color: #d1fae5; font-weight: bold"] * len(row)
+            style = "background-color: #d1fae5; font-weight: bold;"
         elif "Rejected" in row["Status"]:
-            return ["background-color: #fef3c7"] * len(row)
-        elif "❌" in row["Status"]:
-            return ["background-color: #fee2e2"] * len(row)
+            style = "background-color: #fef3c7;"
+        elif "❌" in row["Status"] or row["Status"] == "Underperformed" or row["Status"] == "Worst":
+            style = "background-color: #fee2e2;"
         elif row["Status"] == "Baseline":
-            return ["background-color: #e9e9e9"] * len(row)
-        return [""] * len(row)
+            style = "background-color: #f0f0f0;"   # light gray, not dark
+        else:
+            style = ""
+    
+        # Combine style with black text
+        full_style = style + " " + black_text if style else black_text
+        return [full_style] * len(row)
 
     st.dataframe(
         model_data.style.apply(highlight_rows, axis=1),
