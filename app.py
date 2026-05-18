@@ -3,6 +3,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import seaborn as sns
+from statsmodels.tsa.statespace.sarimax import SARIMAX
+from sklearn.metrics import mean_absolute_error, mean_squared_error
 
 # ── Page config ───────────────────────────────────────────────────────────────
 st.set_page_config(
@@ -129,6 +131,31 @@ def load_data():
     df = pd.DataFrame(rows).sort_values("date").reset_index(drop=True)
     return df
 
+@st.cache_data
+def fit_sarima():
+    """Fit SARIMA(0,1,0)×(1,1,0,12) on scaled data — mirrors notebook section 20."""
+    rows = []
+    for month_str, modes in RAW.items():
+        date = pd.to_datetime(month_str, format="%b-%y")
+        rows.append({"date": date, "ridership": modes["MRT"]})
+    mrt_df = pd.DataFrame(rows).sort_values("date").reset_index(drop=True)
+
+    # Scale to millions (same as notebook)
+    ridership_scaled = mrt_df["ridership"] / 1_000_000
+
+    # Same train/test split as notebook: 60 train, 12 test
+    train_scaled = ridership_scaled[:60]
+    test_scaled  = ridership_scaled[60:]
+    train_dates  = mrt_df["date"][:60]
+    test_dates   = mrt_df["date"][60:]
+
+    # Fit final model
+    model = SARIMAX(train_scaled, order=(0, 1, 0), seasonal_order=(1, 1, 0, 12))
+    fitted = model.fit(disp=False)
+    forecast = fitted.forecast(steps=len(test_scaled))
+
+    return train_dates, train_scaled, test_dates, test_scaled, forecast
+
 df = load_data()
 mrt = df[df["mode"] == "MRT"].copy()
 
@@ -174,10 +201,51 @@ with c4:
 
 st.markdown("")
 
-# ── Chart 1 – Ridership Trend ─────────────────────────────────────────────────
-st.subheader("📈 Public Transport Ridership (Jan 2019 – Sep 2024)")
+# ── Chart 1 – SARIMA Forecast (THE main chart) ────────────────────────────────
+st.subheader("🎯 SARIMA(0,1,0)×(1,1,0,12) — Forecast vs Actual (2024 Test Set)")
+
+with st.spinner("Fitting SARIMA model..."):
+    train_dates, train_scaled, test_dates, test_scaled, sarima_forecast = fit_sarima()
 
 sns.set_theme(style="darkgrid")
+fig0, ax0 = plt.subplots(figsize=(14, 5))
+
+ax0.plot(train_dates, train_scaled, color="#1a56db", label="Training Data", alpha=0.8)
+ax0.plot(test_dates, test_scaled, color="#22c55e", linewidth=2.5, label="Actual (2024 Test)")
+ax0.plot(test_dates, sarima_forecast, color="#f59e0b", linestyle="--",
+         linewidth=2.5, label="SARIMA Forecast")
+
+ax0.set_xlabel("Date")
+ax0.set_ylabel("Ridership (Millions)")
+ax0.set_title("Final Model: SARIMA(0,1,0)×(1,1,0,12) — 4.67% MAPE on 2024 Test Set",
+              fontsize=13, fontweight="bold")
+ax0.xaxis.set_major_formatter(mdates.DateFormatter("%b '%y"))
+ax0.xaxis.set_major_locator(mdates.MonthLocator(interval=6))
+plt.xticks(rotation=45)
+ax0.legend()
+plt.tight_layout()
+st.pyplot(fig0)
+plt.close()
+
+# Show actual vs forecast table
+import warnings
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    forecast_table = pd.DataFrame({
+        "Month": test_dates.dt.strftime("%b %Y").values,
+        "Actual (M)": test_scaled.values.round(3),
+        "Forecast (M)": sarima_forecast.values.round(3),
+        "Error %": (abs(test_scaled.values - sarima_forecast.values) / test_scaled.values * 100).round(2),
+    })
+
+with st.expander("📋 View Actual vs Forecast Table (2024)"):
+    st.dataframe(forecast_table, use_container_width=True, hide_index=True)
+
+st.markdown("")
+
+# ── Chart 2 – Ridership Trend ─────────────────────────────────────────────────
+st.subheader("📈 Public Transport Ridership (Jan 2019 – Sep 2024)")
+
 fig1, ax1 = plt.subplots(figsize=(14, 5))
 
 colors = {"MRT": "#1a56db", "LRT": "#f59e0b", "Public Bus": "#10b981"}
@@ -202,14 +270,15 @@ plt.tight_layout()
 st.pyplot(fig1)
 plt.close()
 
-# ── Chart 2 – Model Comparison ────────────────────────────────────────────────
+# ── Chart 3 – Model Comparison ────────────────────────────────────────────────
 st.subheader("🏆 Model Performance Comparison (2024 Test Set)")
 
 st.markdown("""
 <div class="insight-box">
     💡 <strong>Key finding:</strong> SARIMA(0,1,0)×(1,1,0,12) achieves <strong>4.67% MAPE</strong> —
     52% lower error than ARIMA (9.74%) and 47% lower than the best Prophet config (8.76%).
-    A lower-MAPE SARIMA variant (2.54%) was rejected after failing diagnostic tests (boundary parameters + residual violations).
+    A lower-MAPE SARIMA variant (2.54%) was rejected after failing diagnostic tests
+    (boundary parameters + residual violations).
 </div>
 """, unsafe_allow_html=True)
 
@@ -263,7 +332,7 @@ with col_b:
     st.pyplot(fig3)
     plt.close()
 
-# ── Chart 3 – Seasonality ─────────────────────────────────────────────────────
+# ── Chart 4 – Seasonality ─────────────────────────────────────────────────────
 st.subheader("📅 MRT Seasonality — Average Ridership by Calendar Month")
 st.caption("Note: COVID years (2020–2021) suppress the Apr–Jun average significantly.")
 
@@ -285,7 +354,7 @@ plt.tight_layout()
 st.pyplot(fig2)
 plt.close()
 
-# ── Chart 4 – COVID Anomaly Detection ─────────────────────────────────────────
+# ── Chart 5 – COVID Anomaly Detection ─────────────────────────────────────────
 st.subheader("🦠 COVID-19 Ridership Anomaly — Apr 2020 Circuit Breaker")
 
 mrt_sorted = mrt.sort_values("date").copy()
