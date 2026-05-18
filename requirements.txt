@@ -3,7 +3,7 @@ matplotlib
 seaborn
 statsmodels
 prophet
-evidently
+scikit-learn
 streamlit
 requests
 python-dotenv
